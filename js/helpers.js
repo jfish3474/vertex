@@ -3,19 +3,21 @@
 const OFFSET_X = 50; // Adjust as needed
 const OFFSET_Y = 50;
 
-function drawVertex(context, vertex, color = '#3575F0') {
+function drawVertex(context, vertex, color) {
     context.beginPath();
     context.arc(vertex.x + OFFSET_X, vertex.y + OFFSET_Y, 15, 0, Math.PI * 2);
     context.fillStyle = color;
     context.fill();
+    context.strokeStyle = '#000';
     context.stroke();
 
-    // Draw the remaining connection count
+    // Draw the remaining count as text
     context.fillStyle = '#FFF';
-    context.font = '15px Arial';
+    context.font = '12px Arial';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText(vertex.remaining.toString(), vertex.x + OFFSET_X, vertex.y + OFFSET_Y);
+    const text = vertex.remaining;
+    context.fillText(text, vertex.x + OFFSET_X, vertex.y + OFFSET_Y);
 }
 
 function drawLine(context, start, end, color = '#000') {
@@ -62,3 +64,11 @@ function hexToRGBA(hex, opacity) {
 
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
+
+// Example of logging vertex counts
+vertices.forEach(vertex => {
+    console.log(`Vertex (${vertex.x}, ${vertex.y}): count = ${vertex.count}`);
+});
+
+// Example of logging total unique edges
+console.log(`Total unique edges: ${edgeSet.size}`);

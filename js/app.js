@@ -42,25 +42,33 @@ function onCanvasClick(event) {
         } else if (selectedVertex === clickedVertex) {
             selectedVertex = null;
         } else {
-            const connectionKey = `${selectedVertex.x},${selectedVertex.y}-${clickedVertex.x},${clickedVertex.y}`;
-            const isCorrect = gameState.correctConnections.has(connectionKey);
-            
-            gameState.edges.push({ 
-                start: selectedVertex, 
-                end: clickedVertex, 
-                correct: isCorrect 
+            const edgeKey = createEdgeKey(selectedVertex, clickedVertex);
+            const isCorrect = gameState.correctConnections.has(edgeKey);
+
+            // Avoid duplicate edges
+            const edgeExists = gameState.edges.some(edge => {
+                const existingEdgeKey = createEdgeKey(edge.start, edge.end);
+                return existingEdgeKey === edgeKey;
             });
 
-            if (isCorrect) {
-                selectedVertex.remaining--;
-                clickedVertex.remaining--;
-                checkPolygonCompletion();
+            if (!edgeExists) {
+                gameState.edges.push({
+                    start: selectedVertex,
+                    end: clickedVertex,
+                    correct: isCorrect
+                });
+
+                if (isCorrect) {
+                    selectedVertex.remaining--;
+                    clickedVertex.remaining--;
+                    checkPolygonCompletion();
+                }
             }
 
             selectedVertex = null;
+            drawGame();
         }
-        drawGame();
-    } else if (selectedVertex !== null) {
+    } else {
         selectedVertex = null;
         drawGame();
     }
@@ -69,24 +77,23 @@ function onCanvasClick(event) {
 function checkPolygonCompletion() {
     gameState.polygons.forEach(polygon => {
         if (!polygon.completed) {
-            // Build all correct connection keys for this polygon
-            const polygonEdges = [];
+            // Build edge keys for all edges in the polygon
+            const polygonEdgeKeys = [];
             const vertices = polygon.vertices;
-            for (let i = 0; i < vertices.length; i++) {
+            const numVertices = vertices.length;
+
+            for (let i = 0; i < numVertices; i++) {
                 const startVertex = vertices[i];
-                const endVertex = vertices[(i + 1) % vertices.length];
-                const key = `${startVertex.x},${startVertex.y}-${endVertex.x},${endVertex.y}`;
-                const reverseKey = `${endVertex.x},${endVertex.y}-${startVertex.x},${startVertex.y}`;
-                polygonEdges.push(key);
-                polygonEdges.push(reverseKey);
+                const endVertex = vertices[(i + 1) % numVertices]; // Loop back to start
+                const edgeKey = createEdgeKey(startVertex, endVertex);
+                polygonEdgeKeys.push(edgeKey);
             }
 
             // Check if all edges are in gameState.edges and are correct
-            const allEdgesCompleted = polygonEdges.every(edgeKey => {
+            const allEdgesCompleted = polygonEdgeKeys.every(edgeKey => {
                 return gameState.edges.some(edge => {
-                    const key = `${edge.start.x},${edge.start.y}-${edge.end.x},${edge.end.y}`;
-                    const reverseKey = `${edge.end.x},${edge.end.y}-${edge.start.x},${edge.start.y}`;
-                    return (key === edgeKey || reverseKey === edgeKey) && edge.correct;
+                    const existingEdgeKey = createEdgeKey(edge.start, edge.end);
+                    return existingEdgeKey === edgeKey && edge.correct;
                 });
             });
 
@@ -123,15 +130,26 @@ function drawGame() {
 }
 
 function eraseDrawing() {
-    gameState.edges = [];
-    gameState.vertices.forEach(vertex => {
-        vertex.remaining = vertex.count;
+    // Remove only incorrect edges
+    const incorrectEdges = gameState.edges.filter(edge => !edge.correct);
+
+    // Update remaining counts for vertices connected by incorrect edges
+    incorrectEdges.forEach(edge => {
+        // No need to adjust remaining counts since we didn't decrement them for incorrect edges
     });
-    gameState.polygons.forEach(polygon => {
-        polygon.completed = false;
-        polygon.opacity = 0; // Reset opacity to 0%
-    });
+
+    // Keep only correct edges
+    gameState.edges = gameState.edges.filter(edge => edge.correct);
+
+    // Redraw the game state
     drawGame();
+}
+
+// Ensure createEdgeKey is available in app.js
+function createEdgeKey(vertexA, vertexB) {
+    const keyA = `${vertexA.x},${vertexA.y}`;
+    const keyB = `${vertexB.x},${vertexB.y}`;
+    return keyA < keyB ? `${keyA}-${keyB}` : `${keyB}-${keyA}`;
 }
 
 window.onload = initGame;
