@@ -4,7 +4,7 @@ console.log('parseSVGPath:', typeof parseSVGPath);
 
 // Function to parse the SVG and extract vertices and correct connections
 async function parseSVG() {
-    const response = await fetch('assets/Low Poly Apple with ID.svg'); // Adjust path if necessary
+    const response = await fetch('assets/Low Poly Apple with ID.svg');
     const svgText = await response.text();
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
@@ -12,12 +12,12 @@ async function parseSVG() {
     const paths = svgDoc.querySelectorAll('path');
     const vertices = [];
     const vertexMap = new Map();
-    const edgeSet = new Set(); // Global set of unique edges
+    const edgeSet = new Set();
     const correctConnections = new Set();
     const polygons = [];
 
-    // Map to store edges connected to each vertex to avoid double-counting
-    const vertexEdgeMap = new Map();
+    // Map to store unique connections for each vertex
+    const vertexConnections = new Map();
 
     paths.forEach((pathElement) => {
         const pathData = pathElement.getAttribute('d');
@@ -25,59 +25,57 @@ async function parseSVG() {
 
         const { points } = extractPointsFromPathData(pathData);
 
-        // Map vertices and ensure uniqueness
         const pathVertices = points.map(point => {
             const key = `${point.x},${point.y}`;
             if (!vertexMap.has(key)) {
                 const vertex = { x: point.x, y: point.y, count: 0 };
                 vertexMap.set(key, vertex);
                 vertices.push(vertex);
+                vertexConnections.set(vertex, new Set());
             }
             return vertexMap.get(key);
         });
 
         const numVertices = pathVertices.length;
 
-        // Create correct connections between consecutive points
         for (let i = 0; i < numVertices; i++) {
             const startVertex = pathVertices[i];
-            const endVertex = pathVertices[(i + 1) % numVertices]; // Loop back to start
+            const endVertex = pathVertices[(i + 1) % numVertices];
 
             const edgeKey = createEdgeKey(startVertex, endVertex);
 
-            // Only process if the edge hasn't been added yet globally
             if (!edgeSet.has(edgeKey)) {
                 edgeSet.add(edgeKey);
                 correctConnections.add(edgeKey);
 
-                // Initialize vertex edge maps if not already done
-                if (!vertexEdgeMap.has(startVertex)) {
-                    vertexEdgeMap.set(startVertex, new Set());
-                }
-                if (!vertexEdgeMap.has(endVertex)) {
-                    vertexEdgeMap.set(endVertex, new Set());
-                }
-
-                // Increment counts if the edge hasn't been counted for this vertex
-                if (!vertexEdgeMap.get(startVertex).has(edgeKey)) {
-                    vertexEdgeMap.get(startVertex).add(edgeKey);
-                    startVertex.count++;
-                }
-                if (!vertexEdgeMap.get(endVertex).has(edgeKey)) {
-                    vertexEdgeMap.get(endVertex).add(edgeKey);
-                    endVertex.count++;
-                }
+                // Add unique connections for each vertex
+                vertexConnections.get(startVertex).add(endVertex);
+                vertexConnections.get(endVertex).add(startVertex);
             }
         }
 
-        // Store the polygon with its vertices, fill color, and initial opacity
         polygons.push({ vertices: pathVertices, fill, opacity: 0, completed: false });
     });
 
-    // Initialize remaining counts
+    // Set the correct count for each vertex
     vertices.forEach(vertex => {
+        const connections = Array.from(vertexConnections.get(vertex));
+        // Filter out self-connection
+        const uniqueConnections = connections.filter(v => v !== vertex);
+        vertex.count = uniqueConnections.length;
         vertex.remaining = vertex.count;
     });
+
+    // Log information for vertex (16, 313.5)
+    const targetVertex = vertices.find(v => v.x === 16 && v.y === 313.5);
+    if (targetVertex) {
+        console.log(`Vertex (16, 313.5) count: ${targetVertex.count}`);
+        console.log('Connected to:');
+        const connections = Array.from(vertexConnections.get(targetVertex));
+        connections.filter(v => v !== targetVertex).forEach(connectedVertex => {
+            console.log(`(${connectedVertex.x}, ${connectedVertex.y})`);
+        });
+    }
 
     return { vertices, edges: [], polygons, correctConnections };
 }
@@ -86,7 +84,6 @@ async function parseSVG() {
 function createEdgeKey(vertexA, vertexB) {
     const keyA = `${vertexA.x},${vertexA.y}`;
     const keyB = `${vertexB.x},${vertexB.y}`;
-    // Ensure the key is ordered to avoid duplicates in reverse
     return keyA < keyB ? `${keyA}-${keyB}` : `${keyB}-${keyA}`;
 }
 
@@ -116,14 +113,12 @@ function extractPointsFromPathData(pathData) {
                 lastY = y;
             }
         } else if (type === 'Z' || type === 'z') {
-            // Close the path by connecting the last point to the starting point
+            // Close the path by connecting to the starting point if necessary
             if (lastX !== startX || lastY !== startY) {
-                // Only add the closing point if it's not already the same as the start point
                 points.push({ x: startX, y: startY });
             }
-        } else {
-            // Handle other path commands if necessary
         }
+        // Handle other commands if necessary
     });
 
     return { points };

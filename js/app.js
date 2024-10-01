@@ -77,7 +77,6 @@ function onCanvasClick(event) {
 function checkPolygonCompletion() {
     gameState.polygons.forEach(polygon => {
         if (!polygon.completed) {
-            // Build edge keys for all edges in the polygon
             const polygonEdgeKeys = [];
             const vertices = polygon.vertices;
             const numVertices = vertices.length;
@@ -89,7 +88,7 @@ function checkPolygonCompletion() {
                 polygonEdgeKeys.push(edgeKey);
             }
 
-            // Check if all edges are in gameState.edges and are correct
+            // Check if all edges are present and correct
             const allEdgesCompleted = polygonEdgeKeys.every(edgeKey => {
                 return gameState.edges.some(edge => {
                     const existingEdgeKey = createEdgeKey(edge.start, edge.end);
@@ -99,7 +98,7 @@ function checkPolygonCompletion() {
 
             if (allEdgesCompleted) {
                 polygon.completed = true;
-                polygon.opacity = 1; // Set opacity to 100%
+                polygon.opacity = 1; // Fully opaque when completed
             }
         }
     });
