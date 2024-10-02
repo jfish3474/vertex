@@ -3,29 +3,31 @@
 const OFFSET_X = 50; // Adjust as needed
 const OFFSET_Y = 50;
 
-function drawVertex(context, vertex) {
+function drawVertex(context, vertex, scale) {
+    const vertexRadius = 15 / scale; // Adjust radius based on scale
     context.beginPath();
-    context.arc(vertex.x + OFFSET_X, vertex.y + OFFSET_Y, 15, 0, Math.PI * 2);
+    context.arc(vertex.x + OFFSET_X, vertex.y + OFFSET_Y, vertexRadius, 0, Math.PI * 2);
     context.fillStyle = vertex.isSelected ? '#FFFF00' : '#3575F0';
     context.fill();
     context.strokeStyle = '#000';
+    context.lineWidth = 1 / scale; // Adjust line width based on scale
     context.stroke();
 
     // Draw the remaining count as text
     context.fillStyle = '#FFF';
-    context.font = '12px Arial';
+    context.font = `${12 / scale}px Arial`; // Adjust font size based on scale
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     const text = vertex.remaining.toString();
     context.fillText(text, vertex.x + OFFSET_X, vertex.y + OFFSET_Y);
 }
 
-function drawLine(context, start, end, color) {
+function drawLine(context, start, end, color, scale) {
     context.beginPath();
     context.moveTo(start.x + OFFSET_X, start.y + OFFSET_Y);
     context.lineTo(end.x + OFFSET_X, end.y + OFFSET_Y);
     context.strokeStyle = color;
-    context.lineWidth = 2;
+    context.lineWidth = 1 / scale; // Adjust line width based on scale
     context.stroke();
     console.log(`Drew line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) in color ${color}`);
 }
@@ -55,7 +57,7 @@ function drawPolygon(context, polygon) {
             context.moveTo(start.x + OFFSET_X, start.y + OFFSET_Y);
             context.lineTo(end.x + OFFSET_X, end.y + OFFSET_Y);
             context.strokeStyle = '#000';
-            context.lineWidth = 2;
+            context.lineWidth = 1;
             context.stroke();
         }
     }
