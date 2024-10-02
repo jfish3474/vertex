@@ -42,6 +42,9 @@ async function parseSVG() {
             const startVertex = pathVertices[i];
             const endVertex = pathVertices[(i + 1) % numVertices];
 
+            // Skip if start and end vertices are the same
+            if (startVertex === endVertex) continue;
+
             const edgeKey = createEdgeKey(startVertex, endVertex);
 
             if (!edgeSet.has(edgeKey)) {
@@ -54,7 +57,14 @@ async function parseSVG() {
             }
         }
 
-        polygons.push({ vertices: pathVertices, fill, opacity: 0, completed: false });
+        polygons.push({ 
+            id: pathElement.id, 
+            vertices: pathVertices, 
+            fill, 
+            opacity: 0, 
+            completed: false, 
+            completedEdges: 0 
+        });
     });
 
     // Set the correct count for each vertex
@@ -131,3 +141,5 @@ function pointsEqual(p1, p2, tolerance = 0.01) {
         Math.abs(p1.y - p2.y) <= tolerance
     );
 }
+
+// Export any other functions you need

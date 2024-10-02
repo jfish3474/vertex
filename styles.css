@@ -1,0 +1,23 @@
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+#gameCanvas {
+    touch-action: none;
+    display: block;
+    /* Remove width and height if you set them in HTML or via JavaScript */
+}
+
+#eraseButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px;
+    font-size: 16px;
+    background-color: #ff5c5c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}

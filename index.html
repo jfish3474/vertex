@@ -4,29 +4,7 @@
     <meta charset="UTF-8">
     <title>Vertex Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* styles.css */
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        #gameCanvas {
-            touch-action: none;
-            display: block;
-        }
-        #eraseButton {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px;
-            font-size: 16px;
-            background-color: #ff5c5c;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
     <!-- Include svg-path-parser library -->
     <script src="https://cdn.jsdelivr.net/npm/svg-path-parser@1.1.2/dist/svg-path-parser.min.js"></script>
 </head>
@@ -35,8 +13,9 @@
     <button id="eraseButton">Erase</button>
 
     <!-- Include JavaScript files in the correct order -->
-    <script src="js/parseSVG.js"></script>
+    <script src="js/constants.js"></script>
     <script src="js/helpers.js"></script>
+    <script src="js/parseSVG.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

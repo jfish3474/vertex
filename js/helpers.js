@@ -3,10 +3,10 @@
 const OFFSET_X = 50; // Adjust as needed
 const OFFSET_Y = 50;
 
-function drawVertex(context, vertex, color) {
+function drawVertex(context, vertex) {
     context.beginPath();
     context.arc(vertex.x + OFFSET_X, vertex.y + OFFSET_Y, 15, 0, Math.PI * 2);
-    context.fillStyle = color;
+    context.fillStyle = vertex.isSelected ? '#FFFF00' : '#3575F0';
     context.fill();
     context.strokeStyle = '#000';
     context.stroke();
@@ -16,17 +16,18 @@ function drawVertex(context, vertex, color) {
     context.font = '12px Arial';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    const text = vertex.remaining;
+    const text = vertex.remaining.toString();
     context.fillText(text, vertex.x + OFFSET_X, vertex.y + OFFSET_Y);
 }
 
-function drawLine(context, start, end, color = '#000') {
+function drawLine(context, start, end, color) {
     context.beginPath();
     context.moveTo(start.x + OFFSET_X, start.y + OFFSET_Y);
     context.lineTo(end.x + OFFSET_X, end.y + OFFSET_Y);
     context.strokeStyle = color;
     context.lineWidth = 2;
     context.stroke();
+    console.log(`Drew line from (${start.x}, ${start.y}) to (${end.x}, ${end.y}) in color ${color}`);
 }
 
 function drawPolygon(context, polygon) {
@@ -42,6 +43,39 @@ function drawPolygon(context, polygon) {
     // Use the polygon's current opacity
     context.fillStyle = hexToRGBA(polygon.fill, polygon.opacity);
     context.fill();
+
+    // Draw edges
+    for (let i = 0; i < polygon.vertices.length; i++) {
+        const start = polygon.vertices[i];
+        const end = polygon.vertices[(i + 1) % polygon.vertices.length];
+        const edgeKey = createEdgeKey(start, end);
+        const edge = gameState.edges.find(e => e.key === edgeKey);
+        if (edge && edge.correct) {
+            context.beginPath();
+            context.moveTo(start.x + OFFSET_X, start.y + OFFSET_Y);
+            context.lineTo(end.x + OFFSET_X, end.y + OFFSET_Y);
+            context.strokeStyle = '#000';
+            context.lineWidth = 2;
+            context.stroke();
+        }
+    }
+
+    // Log information about Vector 33
+    if (polygon.id === "Vector 33") {
+        console.log(`Vector 33 - Vertices: ${polygon.vertices.length}`);
+        console.log(`Vector 33 - Completed edges: ${polygon.completedEdges}`);
+        console.log(`Vector 33 - Total edges: ${polygon.vertices.length}`);
+        console.log(`Vector 33 - Remaining edges: ${polygon.vertices.length - polygon.completedEdges}`);
+        
+        console.log("Vector 33 - Edge status:");
+        for (let i = 0; i < polygon.vertices.length; i++) {
+            const start = polygon.vertices[i];
+            const end = polygon.vertices[(i + 1) % polygon.vertices.length];
+            const edgeKey = createEdgeKey(start, end);
+            const edge = gameState.edges.find(e => e.key === edgeKey);
+            console.log(`Edge ${i}: ${edgeKey}, Status: ${edge ? (edge.correct ? 'Correct' : 'Incorrect') : 'Not drawn'}`);
+        }
+    }
 }
 
 function hexToRGBA(hex, opacity) {
@@ -65,10 +99,17 @@ function hexToRGBA(hex, opacity) {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
+function createEdgeKey(vertexA, vertexB) {
+    const round = (num) => Math.round(num * 100) / 100; // Round to 2 decimal places
+    const keyA = `${round(vertexA.x)},${round(vertexA.y)}`;
+    const keyB = `${round(vertexB.x)},${round(vertexB.y)}`;
+    return keyA < keyB ? `${keyA}-${keyB}` : `${keyB}-${keyA}`;
+}
+
 // Example of logging vertex counts
-vertices.forEach(vertex => {
-    console.log(`Vertex (${vertex.x}, ${vertex.y}): count = ${vertex.count}`);
-});
+// vertices.forEach(vertex => {
+//     console.log(`Vertex (${vertex.x}, ${vertex.y}): count = ${vertex.count}`);
+// });
 
 // Example of logging total unique edges
-console.log(`Total unique edges: ${edgeSet.size}`);
+// console.log(`Total unique edges: ${edgeSet.size}`);
